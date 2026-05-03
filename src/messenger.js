@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const GRAPH_API_BASE = 'https://graph.facebook.com/v19.0';
+const GRAPH_API_BASE = 'https://graph.facebook.com/v18.0';
 
 /**
  * Sends a text reply to a Messenger user via the Send API.

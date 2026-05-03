@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const FLORA_MCP_URL = process.env.FLORA_MCP_URL;
+const FLORA_MCP_URL = 'https://zqlfbaclcyvbfoabyjyp.supabase.co/functions/v1/mcp';
 const FLORA_MCP_KEY = process.env.FLORA_MCP_KEY;
 
 /**
@@ -12,9 +12,9 @@ const FLORA_MCP_KEY = process.env.FLORA_MCP_KEY;
  *   timestamp  → prepended to message text (epoch ms from Meta)
  */
 async function saveLead({ sender_id, message, raw_event }) {
-  if (!FLORA_MCP_URL || !FLORA_MCP_KEY) {
-    console.warn('FLORA_MCP_URL or FLORA_MCP_KEY not set – skipping lead save');
-    return { data: null, error: new Error('MCP env vars missing') };
+  if (!FLORA_MCP_KEY) {
+    console.warn('FLORA_MCP_KEY not set – skipping lead save');
+    return { data: null, error: new Error('FLORA_MCP_KEY missing') };
   }
 
   const timestamp = raw_event?.timestamp
