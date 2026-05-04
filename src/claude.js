@@ -7,7 +7,7 @@ const FLORA_MCP_URL = 'https://zqlfbaclcyvbfoabyjyp.supabase.co/functions/v1/mcp
 const FLORA_MCP_KEY = process.env.FLORA_MCP_KEY;
 const FLORA_SITE_URL = (process.env.FLORA_SITE_URL || 'https://floragayrimenkul.com').replace(/\/$/, '');
 
-const SYSTEM_PROMPT = `Sen Flora Gayrimenkul'un Köyceğiz bölgesi emlak danışmanısın. Kısa, net, samimi yanıtlar ver. Türkçe konuş. Fiyat bilgisini sadece DM'de paylaş. İlan linkini ve danışman telefonunu her zaman ekle.`;
+const SYSTEM_PROMPT = `Sen Flora Gayrimenkul'un Köyceğiz ofisinden bir emlak danışmanısın. Arkadaşça, samimi ve kısa yaz — sanki telefonda konuşuyormuş gibi. Maksimum 3-4 cümle. Resmi dil kullanma. Fiyatı DM'de söyle, mesajda verme. Her yanıtta ilan linkini ve danışman telefonunu ekle. Türkçe konuş.`;
 
 // ── Flora MCP HTTP helper ─────────────────────────────────────────────────────
 
@@ -110,7 +110,7 @@ async function generateDMReply(userMessage, listings, agentPhone) {
   try {
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 350,
+      max_tokens: 180,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userContent }],
     });
