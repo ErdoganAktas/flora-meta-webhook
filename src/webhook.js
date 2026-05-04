@@ -38,12 +38,20 @@ router.post('/', async (req, res) => {
   // Always respond 200 immediately so Meta doesn't retry
   res.sendStatus(200);
 
+  const body = req.body;
+  console.log(`Webhook POST → object:${body.object} entries:${body.entry?.length ?? 0}`);
+  body.entry?.forEach((entry, i) => {
+    const msgCount = entry.messaging?.length ?? 0;
+    const changeCount = entry.changes?.length ?? 0;
+    console.log(`  entry[${i}]: messaging:${msgCount} changes:${changeCount}`);
+    entry.changes?.forEach(c => console.log(`    change: field:${c.field} item:${c.value?.item}`));
+  });
+
   if (!verifySignature(req)) {
     console.warn('Invalid X-Hub-Signature-256 – payload discarded');
     return;
   }
 
-  const body = req.body;
   if (body.object !== 'page') return;
 
   for (const entry of body.entry ?? []) {
