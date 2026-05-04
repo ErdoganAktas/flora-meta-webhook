@@ -3,7 +3,15 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { saveLead } = require('./supabase');
 const { sendReply } = require('./messenger');
-const { fetchListings, fetchAgentPhone, generateDMReply, buildCommentReply } = require('./claude');
+const {
+  fetchListings,
+  fetchAgentPhone,
+  generateDMReply,
+  isPriceQuestion,
+  buildCommentReply,
+  buildCommentReplySent,
+  buildPriceDM,
+} = require('./claude');
 
 const router = express.Router();
 
@@ -99,14 +107,21 @@ async function handleCommentEvent(value) {
     fetchAgentPhone(),
   ]);
 
-  // Use first matching listing URL; fall back to site listings page
   const FLORA_SITE_URL = (process.env.FLORA_SITE_URL || 'https://floragayrimenkul.com').replace(/\/$/, '');
-  const listingUrl = listings.length
-    ? `${FLORA_SITE_URL}/ilan/${listings[0].slug}`
-    : `${FLORA_SITE_URL}/ilanlar`;
 
-  const reply = buildCommentReply(listingUrl, agentPhone);
-  await postCommentReply(commentId, reply);
+  if (isPriceQuestion(message) && senderId) {
+    // Send price + listing URL via DM, then acknowledge on comment
+    const dm = buildPriceDM(listings, agentPhone, FLORA_SITE_URL);
+    await sendReply(senderId, dm);
+    console.log(`Price DM sent to ${senderId}`);
+    await postCommentReply(commentId, buildCommentReplySent(agentPhone));
+  } else {
+    // Non-price comment: reply publicly with listing URL + phone
+    const listingUrl = listings.length
+      ? `${FLORA_SITE_URL}/ilan/${listings[0].slug}`
+      : `${FLORA_SITE_URL}/ilanlar`;
+    await postCommentReply(commentId, buildCommentReply(listingUrl, agentPhone));
+  }
 }
 
 async function postCommentReply(commentId, text) {

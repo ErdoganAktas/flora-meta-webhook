@@ -126,12 +126,49 @@ function fallbackDMReply(agentPhone) {
   return `Merhaba! Flora Gayrimenkul Köyceğiz ekibine ulaştınız. 🌿 Size en kısa sürede dönüş yapacağız.${phone}`;
 }
 
-// ── Scenario 2: Comment reply (static template) ───────────────────────────────
+// ── Scenario 2: Comment helpers ───────────────────────────────────────────────
 
+function isPriceQuestion(text) {
+  return /fiyat|ücret|ne kadar|kaç para|kaça|tutar|bedel|aylık|kira\s*ne|satış\s*fiyat/i.test(text);
+}
+
+// Comment reply when we proactively DM the price
+function buildCommentReplySent(agentPhone) {
+  const phone = agentPhone ? `\n📞 ${agentPhone}` : '';
+  return `DM'den bilgi gönderdik 📩${phone}`;
+}
+
+// Comment reply for non-price questions
 function buildCommentReply(listingUrl, agentPhone) {
   const link = listingUrl ? `\n🔗 ${listingUrl}` : '';
   const phone = agentPhone ? `\n📞 ${agentPhone}` : '';
-  return `Fiyat bilgisi için DM atabilirsiniz 👇${link}${phone}`;
+  return `Detaylar için buraya göz atabilirsiniz 👇${link}${phone}`;
 }
 
-module.exports = { fetchListings, fetchAgentPhone, generateDMReply, buildCommentReply };
+// DM content sent proactively to the commenter
+function buildPriceDM(listings, agentPhone, siteUrl) {
+  const base = siteUrl.replace(/\/$/, '');
+  const phone = agentPhone ? `\n📞 ${agentPhone}` : '';
+
+  if (!listings.length) {
+    return `Merhaba! Fiyat bilgisi için sizi danışmanımızla buluşturalım.${phone}`;
+  }
+
+  const lines = listings.map(l => {
+    const url = `${base}/ilan/${l.slug}`;
+    const price = l.price ? `${Number(l.price).toLocaleString('tr-TR')} ₺` : 'Fiyat için arayın';
+    return `🏠 ${l.title ?? l.slug}\n💰 ${price}\n🔗 ${url}`;
+  }).join('\n\n');
+
+  return `Merhaba! Sorduğunuz ilan hakkında bilgi:\n\n${lines}${phone}`;
+}
+
+module.exports = {
+  fetchListings,
+  fetchAgentPhone,
+  generateDMReply,
+  isPriceQuestion,
+  buildCommentReply,
+  buildCommentReplySent,
+  buildPriceDM,
+};
