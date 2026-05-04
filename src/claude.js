@@ -42,12 +42,19 @@ async function callFloraRPC(toolName, args = {}) {
 
 async function fetchListings(userMessage) {
   const result = await callFloraRPC('search_listings', { query: userMessage, limit: 3 });
-  return Array.isArray(result) ? result : [];
+  const listings = Array.isArray(result) ? result : [];
+  console.log(`search_listings("${userMessage}") → ${listings.length} ilan bulundu`);
+  if (listings.length) {
+    listings.forEach(l => console.log(`  ilan: ${l.slug} | ${l.title} | ${l.price}`));
+  }
+  return listings;
 }
 
 async function fetchAgentPhone() {
   const agents = await callFloraRPC('list_agents', {});
-  return Array.isArray(agents) && agents.length ? (agents[0].phone ?? null) : null;
+  const phone = Array.isArray(agents) && agents.length ? (agents[0].phone ?? null) : null;
+  console.log(`list_agents → danışman telefonu: ${phone ?? 'bulunamadı'}`);
+  return phone;
 }
 
 // ── Scenario 1: DM reply via Claude ──────────────────────────────────────────
