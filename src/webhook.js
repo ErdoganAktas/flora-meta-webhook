@@ -60,10 +60,16 @@ router.post('/', async (req, res) => {
       await handleDMEvent(event);
     }
 
-    // Scenario 2: Facebook page feed comment
+    // Scenario 2: Facebook page feed (comment or post)
     for (const change of entry.changes ?? []) {
-      if (change.field === 'feed' && change.value?.item === 'comment') {
-        await handleCommentEvent(change.value);
+      if (change.field === 'feed') {
+        const item = change.value?.item;
+        console.log(`Feed event received → item:${item} verb:${change.value?.verb}`);
+        console.log('Feed value:', JSON.stringify(change.value).slice(0, 300));
+
+        if (item === 'comment') {
+          await handleCommentEvent(change.value);
+        }
       }
     }
   }
