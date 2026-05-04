@@ -91,12 +91,21 @@ async function handleCommentEvent(value) {
 
   console.log(`Comment ${commentId} from ${senderId}: ${message}`);
 
-  if (senderId) {
-    await saveLead({ sender_id: senderId, message: `[comment] ${message}`, raw_event: value });
-  }
+  const [, listings, agentPhone] = await Promise.all([
+    senderId
+      ? saveLead({ sender_id: senderId, message: `[comment] ${message}`, raw_event: value })
+      : Promise.resolve(),
+    fetchListings(message),
+    fetchAgentPhone(),
+  ]);
 
-  const agentPhone = await fetchAgentPhone();
-  const reply = buildCommentReply(null, agentPhone);
+  // Use first matching listing URL; fall back to site listings page
+  const FLORA_SITE_URL = (process.env.FLORA_SITE_URL || 'https://floragayrimenkul.com').replace(/\/$/, '');
+  const listingUrl = listings.length
+    ? `${FLORA_SITE_URL}/ilan/${listings[0].slug}`
+    : `${FLORA_SITE_URL}/ilanlar`;
+
+  const reply = buildCommentReply(listingUrl, agentPhone);
   await postCommentReply(commentId, reply);
 }
 
