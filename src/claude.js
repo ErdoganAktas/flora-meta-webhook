@@ -38,15 +38,47 @@ async function callFloraRPC(toolName, args = {}) {
   }
 }
 
+// ── Keyword extractor ─────────────────────────────────────────────────────────
+
+function extractFilters(text) {
+  const t = text.toLowerCase();
+
+  // type
+  const isKiralik = /kiral[iı]k|kira(?!\s*yok)|rent/.test(t);
+  const isSatilik = /sat[iı]l[iı]k|sat[iı]\s|buy|purchase/.test(t);
+  const type = isKiralik ? 'kiralik' : isSatilik ? 'satilik' : undefined;
+
+  // category
+  const isKonut = /daire|ev|konut|villa|m[üu]stakil|apart|residence|oda/.test(t);
+  const isArsa  = /arsa|arazi|tarla|parsel|land/.test(t);
+  const isTicari = /i[şs]yeri|i[şs] yeri|d[üu]kk[aâ]n|ofis|ticari|commercial|magaza|mağaza/.test(t);
+  const category = isKonut ? 'konut' : isArsa ? 'arsa' : isTicari ? 'ticari' : undefined;
+
+  return { type, category };
+}
+
 // ── Public helpers ────────────────────────────────────────────────────────────
 
 async function fetchListings(userMessage) {
-  const result = await callFloraRPC('search_listings', { query: userMessage, limit: 3 });
-  const listings = Array.isArray(result) ? result : [];
-  console.log(`search_listings("${userMessage}") → ${listings.length} ilan bulundu`);
-  if (listings.length) {
-    listings.forEach(l => console.log(`  ilan: ${l.slug} | ${l.title} | ${l.price}`));
+  const { type, category } = extractFilters(userMessage);
+  const args = { limit: 3 };
+  if (type)     args.type     = type;
+  if (category) args.category = category;
+
+  console.log(`search_listings filters → type:${type ?? '-'} category:${category ?? '-'}`);
+
+  // First try with structured filters; if empty, retry without to get any active listings
+  let result = await callFloraRPC('search_listings', args);
+  let listings = Array.isArray(result) ? result : [];
+
+  if (!listings.length) {
+    console.log('Filtreli arama boş döndü, filtresiz tekrar deneniyor...');
+    result = await callFloraRPC('search_listings', { limit: 3 });
+    listings = Array.isArray(result) ? result : [];
   }
+
+  console.log(`search_listings → ${listings.length} ilan bulundu`);
+  listings.forEach(l => console.log(`  ilan: ${l.slug} | ${l.title} | ${l.price}`));
   return listings;
 }
 
